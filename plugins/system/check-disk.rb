@@ -48,6 +48,10 @@ class CheckDisk < Sensu::Plugin::Check::CLI
     :proc => proc {|a| a.to_i },
     :default => 95
 
+  option :inodes,
+      :short => '-i',
+      :description => 'Get disk free amounts by inodes rather than space'
+
   option :debug,
       :short => '-d',
       :long => '--debug',
@@ -61,7 +65,11 @@ class CheckDisk < Sensu::Plugin::Check::CLI
   end
 
   def read_df
-    `df -PT`.split("\n").drop(1).each do |line|
+    cmd = 'df -PT'
+    if config[:inodes]
+      cmd = 'df -iPT'
+    end
+    `#{cmd}`.split("\n").drop(1).each do |line|
       begin
         _fs, type, _blocks, _used, _avail, capacity, mnt = line.split
         next if config[:includeline] && !config[:includeline].find { |x| line.match(x) }
